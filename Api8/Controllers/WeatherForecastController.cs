@@ -1,4 +1,6 @@
+using Api8.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Api8.Controllers;
 
@@ -13,12 +15,15 @@ public class WeatherForecastController : ControllerBase
 
     private readonly ILogger<WeatherForecastController> _logger;
     private readonly IConfiguration _config;
+    private readonly IOptions<AppSettingsOptions> _appSettings;
 
     public WeatherForecastController(ILogger<WeatherForecastController> logger,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IOptions<AppSettingsOptions> appSettings)
     {
         _logger = logger;
         _config = configuration;
+        _appSettings = appSettings;
     }
 
     [HttpGet(Name = "GetWeatherForecast")]
@@ -30,7 +35,8 @@ public class WeatherForecastController : ControllerBase
             TemperatureC = Random.Shared.Next(-20, 55),
             Summary = Summaries[Random.Shared.Next(Summaries.Length)],
             Config = _config.GetValue<string>("AppSettings:SomeKey"),
-            ConnectionStrings = _config.GetConnectionString("DefaultConnection")
+            // ConnectionStrings = _config.GetConnectionString("DefaultConnection"),
+            ConnectionStrings = _appSettings.Value.SmtpIp + ":" + _appSettings.Value.SmtpPort
         })
         .ToArray();
     }
