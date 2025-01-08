@@ -59,3 +59,17 @@ public WeatherForecastController(ILogger<WeatherForecastController> logger, IOpt
 _appSettings.Value.SmtpIp + ":" + _appSettings.Value.SmtpPort
 ```
 
+### **使用環境變數覆蓋 appSettings.json**
+
+```bash
+export AppSettings__SmtpIp=smtp.outlook.com
+export AppSettings__SmtpPort=785
+./Api8        
+```
+
+### **使用指令參數覆蓋環境變數和 appSettings.json**
+
+```bash
+./Api8 --AppSettings:SmtpIp=smtp.haha.com --AppSettings:SmtpPort=777
+```
+
