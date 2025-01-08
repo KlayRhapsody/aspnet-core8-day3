@@ -36,7 +36,7 @@ public class WeatherForecastController : ControllerBase
             Summary = Summaries[Random.Shared.Next(Summaries.Length)],
             Config = _config.GetValue<string>("AppSettings:SomeKey"),
             // ConnectionStrings = _config.GetConnectionString("DefaultConnection"),
-            ConnectionStrings = _appSettings.Value.Smtp.Ip + ":" + _appSettings.Value.Smtp.Port
+            ConnectionStrings = _appSettings.Value.SmtpIp + ":" + _appSettings.Value.SmtpPort
         })
         .ToArray();
     }

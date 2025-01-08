@@ -162,3 +162,91 @@ TMP=234 sh ./script/process-env.sh # 234
 * 使用者環境變數，.profile
 * Session 環境變數，Terminal
 * Process 環境變數，Linux
+
+### **使用 Configuration 相關注意事項**
+
+* 幫定強型別物件綁定組態設定後，盡量不要將綁定後的物件註冊為單例，若注入的類別只有讀取還不會發生問題，但若有修改設定值的需求，則會影響到其他使用該物件的類別或是 Thread Safety 的問題
+* 不用特別將 IConfiguration 物件加入 DI 容器也可注入組態物件
+
+### **設定提供者的套用順序（依序套用設定**
+
+* `AddJsonFile("appsettings.json",
+  optional: true, reloadOnChange: true)`
+
+* `AddJsonFile($"appsettings.{env.EnvironmentName}.json",
+  optional: true, reloadOnChange: true)`
+
+* `AddUserSecrets(appAssembly, optional: true)`
+  - 這個設定預設只有在「開發環境」(Development) 才會套用
+  - 透過 dotnet publish 發行的網站預設為 Production 環境
+
+* `AddEnvironmentVariables()`
+
+* `AddCommandLine(args)` // 優先權最高（會覆寫先前設定）
+
+
+### **CI 作法**
+
+* 在跑 CI 時，產生 appsettings.CI.json，並設定 CI 環境的設定值
+* 在跑 CI 時，可以透過環境變數設定，例如：`export ASPNETCORE_ENVIRONMENT=CI`
+
+
+### **`Configure<TOptions>` 和 `AddOptions<TOptions>().Bind(...)` 差異**
+
+| **特性**                  | **Configure<TOptions>**                                           | **AddOptions<TOptions>().Bind(...)**                         |
+|---------------------------|-------------------------------------------------------------------|-------------------------------------------------------------|
+| **綁定方式**              | 自動綁定 `IConfiguration`。                                       | 手動綁定，需要呼叫 `Bind`。                                 |
+| **使用便捷性**            | 更簡潔，適合單純綁定場景。                                         | 更靈活，適合需要額外處理（如驗證或後期配置）的場景。         |
+| **支持驗證**              | 不直接支持驗證。                                                 | 可以鏈式呼叫 `.Validate(...)` 來進行驗證。                 |
+| **用途**                  | 快速綁定常見的配置類型。                                          | 適用於需要定制行為的配置場景。                              |
+| **結果（服務注入）**      | 添加 `IOptions<T>` 和 `IOptionsMonitor<T>`。                      | 同樣會添加 `IOptions<T>` 和 `IOptionsMonitor<T>`。         |
+
+<br>
+比較兩個場景
+
+| **功能**                        | **`Configure<TOptions>`**                              | **`AddOptions<TOptions>().Bind(...)`**               |
+|----------------------------------|-------------------------------------------------------|------------------------------------------------------|
+| **簡單配置綁定**                | 是                                                    | 是                                                   |
+| **驗證規則**                    | 否                                                    | 是（`Validate` 方法）                                |
+| **後期處理（例如設置預設值）** | 否                                                    | 是（`PostConfigure` 方法）                           |
+| **適用場景**                    | 配置很簡單，無需驗證或後期處理                         | 需要驗證或需要進一步的自定義行為                     |
+
+
+### **驗證資料欄位屬性**
+
+將類別屬性上加上對應的驗證屬性
+
+```csharp
+public class AppSettingsOptions
+{
+    public const string SectionName = "AppSettings";
+    
+    [Required]
+    [StringLength(100, MinimumLength = 1)]
+    public required string SomeKey { get; set; }
+    
+    [Required]
+    [RegularExpression(@"^\d{1,3}(\.\d{1,3}){3}$", ErrorMessage = "Invalid IP address format.")]
+    public required string SmtpIp { get; set; }
+    
+    [Range(1, 65535, ErrorMessage = "Port number must be between 1 and 65535.")]
+    public int SmtpPort { get; set; }
+}
+```
+
+在 `Program.cs` 中註冊驗證，當發送請求時才會檢查是否符合驗證屬性
+
+```csharp
+builder.Services.AddOptions<AppSettingsOptions>()
+    .Bind(builder.Configuration.GetSection(AppSettingsOptions.SectionName))
+    .ValidateDataAnnotations();
+```
+
+啟動時就檢查是否符合驗證屬性，若不符合則會拋出例外，並中斷啟動
+
+```csharp
+builder.Services.AddOptions<AppSettingsOptions>()
+    .Bind(builder.Configuration.GetSection(AppSettingsOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+```

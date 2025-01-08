@@ -9,16 +9,23 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.Configure<AppSettingsOptions>(
-    builder.Configuration.GetSection(AppSettingsOptions.SectionName));
+// builder.Services.Configure<AppSettingsOptions>(
+//     builder.Configuration.GetSection(AppSettingsOptions.SectionName));
 
 // builder.Configuration.Sources.Clear();
-var externalConfigPath = Path.Combine(Directory.GetCurrentDirectory(), 
-    builder.Configuration.GetValue<string>("ExternalAppSettings")!);
-builder.Configuration.AddJsonFile(
-    path: externalConfigPath, 
-    optional: true, 
-    reloadOnChange: true);
+// var externalConfigPath = Path.Combine(Directory.GetCurrentDirectory(), 
+//     builder.Configuration.GetValue<string>("ExternalAppSettings")!);
+
+// builder.Configuration.AddJsonFile(
+//     path: externalConfigPath, 
+//     optional: true, 
+//     reloadOnChange: true);
+
+builder.Services.AddOptions<AppSettingsOptions>()
+    .Bind(builder.Configuration.GetSection(AppSettingsOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
 
 var app = builder.Build();
 
