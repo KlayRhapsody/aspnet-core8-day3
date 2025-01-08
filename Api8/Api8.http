@@ -1,6 +1,0 @@
-@Api8_HostAddress = http://localhost:5044
-
-GET {{Api8_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
