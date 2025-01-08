@@ -73,3 +73,71 @@ export AppSettings__SmtpPort=785
 ./Api8 --AppSettings:SmtpIp=smtp.haha.com --AppSettings:SmtpPort=777
 ```
 
+### **將 AppSettings 設定調整為多階層子屬性**
+
+調整 Ip 和 Port 為 Smtp 的子屬性
+
+```json
+{
+    "AppSettings": {
+        "Smtp": {
+            "Ip": "smtp.gmail.com",
+            "Port": 587
+        }
+    }
+}
+```
+
+對應調整 AppSettingsOptions 類別
+
+```csharp
+public class AppSettingsOptions
+{
+    public const string SectionName = "AppSettings";
+    public required string SomeKey { get; set; }
+    public required SmtpOptions Smtp { get; set; }
+}
+
+public class SmtpOptions
+{
+    public required string Ip { get; set; }
+    public int Port { get; set; }
+}
+```
+
+調整呼叫方式
+
+```csharp
+_appSettings.Value.Smtp.Ip + ":" + _appSettings.Value.Smtp.Port
+```
+
+### **新增自定義組態提供者**
+
+在方案目錄下新增 `./ExternalConfig/appsettings.json`
+
+```json
+{
+  "AppSettings": {
+    "SomeKey": "SomeValue",
+    "Smtp": {
+      "Ip": "smtp.external.com",
+      "Port": 8888
+    }
+  }
+}
+```
+
+在 `Program.cs` 中註冊自定義組態提供者
+
+```csharp
+// 加入當前專案目錄在結合設定檔中設定的相對目錄位置
+var externalConfigPath = Path.Combine(Directory.GetCurrentDirectory(), 
+    builder.Configuration.GetValue<string>("ExternalAppSettings")!);
+
+// 加入外部設定檔，並開啟自動重新載入和可選設定
+// 若設定檔不存在則不會拋出例外
+builder.Configuration.AddJsonFile(
+    path: externalConfigPath, 
+    optional: true, 
+    reloadOnChange: true);
+```

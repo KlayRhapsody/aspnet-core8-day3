@@ -12,6 +12,13 @@ builder.Services.AddSwaggerGen();
 builder.Services.Configure<AppSettingsOptions>(
     builder.Configuration.GetSection(AppSettingsOptions.SectionName));
 
+var externalConfigPath = Path.Combine(Directory.GetCurrentDirectory(), 
+    builder.Configuration.GetValue<string>("ExternalAppSettings")!);
+builder.Configuration.AddJsonFile(
+    path: externalConfigPath, 
+    optional: true, 
+    reloadOnChange: true);
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

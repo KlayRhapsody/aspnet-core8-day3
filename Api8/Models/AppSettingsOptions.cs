@@ -4,6 +4,11 @@ public class AppSettingsOptions
 {
     public const string SectionName = "AppSettings";
     public required string SomeKey { get; set; }
-    public required string SmtpIp { get; set; }
-    public int SmtpPort { get; set; } = 255;
+    public required SmtpOptions Smtp { get; set; }
+}
+
+public class SmtpOptions
+{
+    public required string Ip { get; set; }
+    public int Port { get; set; }
 }

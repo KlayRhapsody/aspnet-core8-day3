@@ -15,11 +15,11 @@ public class WeatherForecastController : ControllerBase
 
     private readonly ILogger<WeatherForecastController> _logger;
     private readonly IConfiguration _config;
-    private readonly IOptions<AppSettingsOptions> _appSettings;
+    private readonly IOptionsSnapshot<AppSettingsOptions> _appSettings;
 
     public WeatherForecastController(ILogger<WeatherForecastController> logger,
         IConfiguration configuration,
-        IOptions<AppSettingsOptions> appSettings)
+        IOptionsSnapshot<AppSettingsOptions> appSettings)
     {
         _logger = logger;
         _config = configuration;
@@ -36,7 +36,7 @@ public class WeatherForecastController : ControllerBase
             Summary = Summaries[Random.Shared.Next(Summaries.Length)],
             Config = _config.GetValue<string>("AppSettings:SomeKey"),
             // ConnectionStrings = _config.GetConnectionString("DefaultConnection"),
-            ConnectionStrings = _appSettings.Value.SmtpIp + ":" + _appSettings.Value.SmtpPort
+            ConnectionStrings = _appSettings.Value.Smtp.Ip + ":" + _appSettings.Value.Smtp.Port
         })
         .ToArray();
     }
