@@ -141,3 +141,24 @@ builder.Configuration.AddJsonFile(
     optional: true, 
     reloadOnChange: true);
 ```
+
+### **使用 Process 環境變數**
+
+在 Linux 下使用 process 環境變數只能透過 script 的方式
+
+```bash
+#!/bin/sh
+
+echo $TMP
+
+export TMP=123
+sh ./script/process-env.sh # 123
+TMP=234 sh ./script/process-env.sh # 234
+```
+
+### **環境變數**
+
+* 系統環境變數，ex. /etc/profile
+* 使用者環境變數，.profile
+* Session 環境變數，Terminal
+* Process 環境變數，Linux

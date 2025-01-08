@@ -12,6 +12,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.Configure<AppSettingsOptions>(
     builder.Configuration.GetSection(AppSettingsOptions.SectionName));
 
+// builder.Configuration.Sources.Clear();
 var externalConfigPath = Path.Combine(Directory.GetCurrentDirectory(), 
     builder.Configuration.GetValue<string>("ExternalAppSettings")!);
 builder.Configuration.AddJsonFile(
