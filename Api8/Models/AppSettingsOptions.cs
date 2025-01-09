@@ -1,7 +1,8 @@
 
 namespace Api8.Models;
 
-public class AppSettingsOptions : IValidatableObject
+// public class AppSettingsOptions : IValidatableObject
+public class AppSettingsOptions
 {
     public const string SectionName = "AppSettings";
     
@@ -16,17 +17,17 @@ public class AppSettingsOptions : IValidatableObject
     [Range(1, 65535, ErrorMessage = "Port number must be between 1 and 65535.")]
     public int SmtpPort { get; set; }
 
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        if (SmtpIp == "127.0.0.1" && SmtpPort != 25)
-        {
-            yield return new ValidationResult(
-                "Invalid port number for localhost SMTP server.",
-                [nameof(SmtpPort)]);
-        }
+    // public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    // {
+    //     if (SmtpIp == "127.0.0.1" && SmtpPort != 25)
+    //     {
+    //         yield return new ValidationResult(
+    //             "Invalid port number for localhost SMTP server.",
+    //             [nameof(SmtpPort)]);
+    //     }
 
-        yield return ValidationResult.Success!;
-    }
+    //     yield return ValidationResult.Success!;
+    // }
 }
 
 // public class SmtpOptions
