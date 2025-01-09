@@ -29,6 +29,17 @@ public class WeatherForecastController : ControllerBase
     [HttpGet(Name = "GetWeatherForecast")]
     public IEnumerable<WeatherForecast> Get()
     {
+
+        
+        _logger.LogTrace("Trace log");
+        _logger.LogDebug("Debug log");
+        _logger.LogInformation("✅ Information log: {SmtpIp}, {SmtpPort}", 
+            _appSettings.Value.SmtpIp,
+            _appSettings.Value.SmtpPort);
+        _logger.LogWarning("Warning log");
+        _logger.LogError("Error log");
+        _logger.LogCritical("Critical log");
+
         return Enumerable.Range(1, 5).Select(index => new WeatherForecast
         {
             Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),

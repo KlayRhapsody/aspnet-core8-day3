@@ -41,6 +41,26 @@ builder.Services.PostConfigure<AppSettingsOptions>(options =>
 builder.Services.AddSingleton<IValidateOptions<AppSettingsOptions>, AppSettingsValidation>();
 builder.Services.AddSingleton<IAllowedIpService, AllowedIpService>();
 
+// Log Provider
+builder.Logging.ClearProviders();
+
+builder.Logging.AddSimpleConsole(options =>
+{
+    options.TimestampFormat = "yyyy-MM-dd HH:mm:ss";
+    options.ColorBehavior = LoggerColorBehavior.Enabled;
+});
+
+// builder.Logging.AddJsonConsole(options =>
+// {
+//     options.IncludeScopes = true;
+//     options.TimestampFormat = "yyyy-MM-dd HH:mm:ss";
+//     options.JsonWriterOptions = new JsonWriterOptions
+//     {
+//         Indented = true,
+//     };
+//     options.UseUtcTimestamp = true;
+// });
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
