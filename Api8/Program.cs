@@ -1,4 +1,5 @@
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -44,22 +45,22 @@ builder.Services.AddSingleton<IAllowedIpService, AllowedIpService>();
 // Log Provider
 builder.Logging.ClearProviders();
 
-builder.Logging.AddSimpleConsole(options =>
-{
-    options.TimestampFormat = "yyyy-MM-dd HH:mm:ss";
-    options.ColorBehavior = LoggerColorBehavior.Enabled;
-});
-
-// builder.Logging.AddJsonConsole(options =>
+// builder.Logging.AddSimpleConsole(options =>
 // {
-//     options.IncludeScopes = true;
 //     options.TimestampFormat = "yyyy-MM-dd HH:mm:ss";
-//     options.JsonWriterOptions = new JsonWriterOptions
-//     {
-//         Indented = true,
-//     };
-//     options.UseUtcTimestamp = true;
+//     options.ColorBehavior = LoggerColorBehavior.Enabled;
 // });
+
+builder.Logging.AddJsonConsole(options =>
+{
+    options.IncludeScopes = true;
+    options.TimestampFormat = "yyyy-MM-dd HH:mm:ss";
+    options.JsonWriterOptions = new JsonWriterOptions
+    {
+        Indented = true,
+    };
+    options.UseUtcTimestamp = true;
+});
 
 var app = builder.Build();
 
@@ -73,6 +74,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.UseLogRequestType();
 
 app.MapControllers();
 

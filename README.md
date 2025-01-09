@@ -300,3 +300,102 @@ builder.Services.AddOptions<AppSettingsOptions>()
 | **測試**                          | 驗證邏輯獨立，易於單元測試                                 | 驗證邏輯內嵌，測試可能需要模擬整個配置類           |
 | **使用場景**                      | 適合複雜驗證邏輯或需要多種驗證器的場景                     | 適合簡單的驗證邏輯，且驗證與配置類密切相關的場景   |
 | **與 Data Annotations 的整合性** | 不直接整合，但可以與 `ValidateDataAnnotations()` 並存      | 與 Data Annotations 無縫整合                       |
+
+
+### **Log 改為使用 Json 格式輸出**
+
+```csharp
+builder.Logging.AddJsonConsole(options =>
+{
+    options.IncludeScopes = true;
+    options.TimestampFormat = "yyyy-MM-dd HH:mm:ss";
+    options.JsonWriterOptions = new JsonWriterOptions
+    {
+        Indented = true,
+    };
+    options.UseUtcTimestamp = true;
+});
+```
+
+Log 輸出結果, 透過 `Scopes` 屬性可以看到相關的資訊
+
+```json
+{
+  "Timestamp": "2025-01-09 09:10:43",
+  "EventId": 1814918596,
+  "LogLevel": "Critical",
+  "Category": "WFCon",
+  "Message": "Critical log",
+  "State": {
+    "Message": "Critical log",
+    "{OriginalFormat}": "Critical log"
+  },
+  "Scopes": [
+    {
+      "Message": "SpanId:68f7724439bccd99, TraceId:c5738a15eeea4a0d230c031c5cc5abc4, ParentId:0000000000000000",
+      "SpanId": "68f7724439bccd99",
+      "TraceId": "c5738a15eeea4a0d230c031c5cc5abc4",
+      "ParentId": "0000000000000000"
+    },
+    {
+      "Message": "ConnectionId:0HN9GHLVEH8HL",
+      "ConnectionId": "0HN9GHLVEH8HL"
+    },
+    {
+      "Message": "RequestPath:/weatherforecast/ RequestId:0HN9GHLVEH8HL:00000001",
+      "RequestId": "0HN9GHLVEH8HL:00000001",
+      "RequestPath": "/weatherforecast/"
+    },
+    {
+      "Message": "Api8.Controllers.WeatherForecastController.Get (Api8)",
+      "ActionId": "9f6eed45-4b37-4283-9b31-ef14e02cd6ad",
+      "ActionName": "Api8.Controllers.WeatherForecastController.Get (Api8)"
+    }
+  ]
+}
+```
+
+
+### **自定義 Log Category**
+
+```csharp
+public WeatherForecastController(ILoggerFactory loggerFactory,
+        IConfiguration configuration,
+        IOptionsSnapshot<AppSettingsOptions> appSettings)
+{
+
+}
+
+var logger = _loggerFactory.CreateLogger(CategoryName);
+
+// 使用 EventId 來識別不同的 Log
+logger.LogInformation(eventId, "✅ Information log: {SmtpIp}, {SmtpPort}", 
+            _appSettings.Value.SmtpIp,
+            _appSettings.Value.SmtpPort);
+```
+
+
+### **透過 BeginScope 來將部分結構化日誌加入 Scope**
+
+可在 Middleware 中透過 `BeginScope` 來加入 Scope
+
+```csharp
+using (_logger.BeginScope(new Dictionary<string, object>
+{
+    ["RequestType"] = context.Request.Method,
+    ["RequestQueryString"] = context.Request.QueryString
+}))
+{
+    await _next(context);
+}
+```
+
+Log 輸出結果
+
+```json
+{
+  "Message": "System.Collections.Generic.Dictionary\u00602[System.String,System.Object]",
+  "RequestType": "GET",
+  "RequestQueryString": "?city=Hanoi\u0026date=2021-09-01"
+}
+```
