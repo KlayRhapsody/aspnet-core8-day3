@@ -1,6 +1,6 @@
 namespace Api8.Extensions;
 
-public static partial class MiddlewareExtensions
+public static class MiddlewareExtensions
 {
     public static IApplicationBuilder UseLogRequestType(this IApplicationBuilder app)
     {

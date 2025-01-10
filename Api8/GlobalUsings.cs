@@ -6,4 +6,5 @@ global using Api8.Extensions;
 global using Api8.Services;
 global using System.Text.Json;
 global using Microsoft.Extensions.Logging.Console;
+global using Serilog;
 

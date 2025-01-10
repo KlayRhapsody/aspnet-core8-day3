@@ -399,3 +399,73 @@ Log 輸出結果
   "RequestQueryString": "?city=Hanoi\u0026date=2021-09-01"
 }
 ```
+
+
+### **透過 `appsettings.json` 設定 Serilog Log**
+
+以下設定有額外使用 Serilog.Expressions 套件
+將 WriteTo 設定為 Console 和 File，並設定格式化輸出
+
+注意事項：
+* File 中無法在 appsettings.json 中設定 encoding 屬性（需透過程式碼設定）
+* File 設定需拿掉色碼設定
+
+```json
+"Serilog": {
+  "MinimumLevel": {
+    "Default": "Information",
+    "Override": {
+      "Microsoft.AspNetCore.Mvc": "Warning",
+      "Microsoft.AspNetCore.Routing": "Warning",
+      "Microsoft.AspNetCore.Hosting": "Warning"
+    }
+  },
+  "WriteTo": [
+    {
+      "Name": "Console",
+      "Args": {
+        "formatter": {
+          "type": "Serilog.Templates.ExpressionTemplate, Serilog.Expressions",
+          "template": "[{@t:HH:mm:ss} {@l:u3}{#if @tr is not null} ({substring(@tr,0,4)}:{substring(@sp,0,4)}){#end}] {@m}\n{@x}",
+          "theme": "Serilog.Templates.Themes.TemplateTheme::Code, Serilog.Expressions"
+        }
+      }
+    },
+    {
+      "Name": "File",
+      "Args": {
+        "path": "Log/log-.txt",
+        "formatter": {
+          "type": "Serilog.Templates.ExpressionTemplate, Serilog.Expressions",
+          "template": "[{@t:HH:mm:ss} {@l:u3}{#if @tr is not null} ({substring(@tr,0,4)}:{substring(@sp,0,4)}){#end}] {@m}\n{@x}"
+        },
+        "rollingInterval": "Day",
+        "buffered": true,
+        "flushToDiskInterval": "00:00:01"
+      }
+    }
+  ]
+}
+```
+
+兩階段初始化 (Two-stage Initialization)
+* 第一階段：先啟動一個簡單的 Serilog Logger（Bootstrap Logger），捕捉應用程式啟動過程的錯誤。
+* 第二階段：ASP.NET Core 啟動完成後，切換成完整設定的 Logger
+
+```csharp
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
+
+builder.Services.AddSerilog((services, lc) => lc
+        .ReadFrom.Configuration(builder.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext());
+```
+
+
+### **`ReadFrom.Services(services)` 的用途**
+
+* 整合 DI：讓 Serilog 自動載入註冊在 DI 容器的服務（如 Enricher、Sink、Filter）。
+* 動態設定：支援動態切換日誌層級（如 LoggingLevelSwitch）。
+* 擴充性強：可使用 DI 提供的服務來擴充日誌功能。
