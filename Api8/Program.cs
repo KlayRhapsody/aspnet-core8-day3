@@ -1,6 +1,5 @@
 
 
-using Serilog;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -19,7 +18,6 @@ try
     var builder = WebApplication.CreateBuilder(args);
 
     // Add services to the container.
-
     builder.Services.AddControllers();
     // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
     builder.Services.AddEndpointsApiExplorer();
@@ -78,10 +76,21 @@ try
         options.UseUtcTimestamp = true;
     });
 
+    var sinkOptions = new MSSqlServerSinkOptions
+    {
+        TableName = "LogEvents",
+        AutoCreateSqlTable = true,          // 若資料表不存在，則自動建表
+        BatchPostingLimit = 50,             // 每批寫入幾筆（預設 50）
+        BatchPeriod = TimeSpan.FromSeconds(5),  // 多少秒後強制寫入一次
+    };
+
     builder.Services.AddSerilog((services, lc) => lc
         .ReadFrom.Configuration(builder.Configuration)
         .ReadFrom.Services(services)
-        .Enrich.FromLogContext());
+        .Enrich.FromLogContext()
+        .WriteTo.MSSqlServer(
+            connectionString: builder.Configuration.GetConnectionString("DefaultConnection"),
+            sinkOptions: sinkOptions));
         
     var app = builder.Build();
 
