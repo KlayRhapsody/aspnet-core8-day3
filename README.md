@@ -469,3 +469,75 @@ builder.Services.AddSerilog((services, lc) => lc
 * 整合 DI：讓 Serilog 自動載入註冊在 DI 容器的服務（如 Enricher、Sink、Filter）。
 * 動態設定：支援動態切換日誌層級（如 LoggingLevelSwitch）。
 * 擴充性強：可使用 DI 提供的服務來擴充日誌功能。
+
+
+### **在 Serilog 中使用自定義 EnrichDiagnosticContext**
+
+安裝套件
+
+```bash
+dotnet add package Serilog.Formatting.Compact
+```
+
+在每一個請求中的 Middleware 中加入自定義屬性
+
+```csharp
+app.UseSerilogRequestLogging(options =>
+{
+    options.MessageTemplate = "Handled {RequestPath}";
+    options.EnrichDiagnosticContext = (diagnosticContext, httpContent) =>
+    {
+        diagnosticContext.Set("RequestHost", httpContent.Request.Host.Value);
+        diagnosticContext.Set("RequestScheme", httpContent.Request.Scheme);
+        diagnosticContext.Set("RequestProtocol", httpContent.Request.Protocol);
+    };
+});
+```
+
+改用 Serilog.Formatting.Compact 來記錄 JSON 格式的 Log，並設定 FromLogContext
+
+```json
+{
+  "WriteTo": [
+    {
+      "Name": "Console",
+      "Args": {
+        "formatter": "Serilog.Formatting.Compact.CompactJsonFormatter, Serilog.Formatting.Compact"
+      }
+    },
+    {
+      "Name": "File",
+      "Args": {
+        "path": "Log/log-.txt",
+        "formatter": "Serilog.Formatting.Compact.CompactJsonFormatter, Serilog.Formatting.Compact",
+        "rollingInterval": "Day",
+        "buffered": true,
+        "flushToDiskInterval": "00:00:01"
+      }
+    }
+  ],
+  "Enrich": [ "FromLogContext" ]
+}
+```
+
+輸出範例
+
+```json
+{
+  "@t":"2025-01-13T07:09:24.7792740Z",
+  "@mt":"Handled {RequestPath}",
+  "@tr":"c99acacc3e79f892dcfe344ff1cf53ef",
+  "@sp":"94c51da91394fe9f",
+  "RequestHost":"localhost:5200",
+  "RequestScheme":"http",
+  "RequestProtocol":"HTTP/1.1",
+  "RequestMethod":"GET",
+  "RequestPath":"/weatherforecast/",
+  "StatusCode":200,
+  "Elapsed":40.321083,
+  "SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware",
+  "RequestId":"0HN9JK4R1PHVF:00000001",
+  "ConnectionId":"0HN9JK4R1PHVF"
+}
+```
+

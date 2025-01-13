@@ -1,6 +1,8 @@
 
 
 
+using Serilog.Extensions.Hosting;
+
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
     .CreateBootstrapLogger();
@@ -84,6 +86,7 @@ try
         BatchPeriod = TimeSpan.FromSeconds(5),  // 多少秒後強制寫入一次
     };
 
+    // builder.Logging.AddSerilog();
     builder.Services.AddSerilog((services, lc) => lc
         .ReadFrom.Configuration(builder.Configuration)
         .ReadFrom.Services(services)
@@ -94,7 +97,16 @@ try
         
     var app = builder.Build();
 
-    app.UseSerilogRequestLogging();
+    app.UseSerilogRequestLogging(options =>
+    {
+        options.MessageTemplate = "Handled {RequestPath}";
+        options.EnrichDiagnosticContext = (diagnosticContext, httpContent) =>
+        {
+            diagnosticContext.Set("RequestHost", httpContent.Request.Host.Value);
+            diagnosticContext.Set("RequestScheme", httpContent.Request.Scheme);
+            diagnosticContext.Set("RequestProtocol", httpContent.Request.Protocol);
+        };
+    });
 
     // Configure the HTTP request pipeline.
     if (app.Environment.IsDevelopment())

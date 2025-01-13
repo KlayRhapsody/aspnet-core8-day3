@@ -18,16 +18,19 @@ public class WeatherForecastController : ControllerBase
     private readonly ILoggerFactory _loggerFactory;
     private readonly IConfiguration _config;
     private readonly IOptionsSnapshot<AppSettingsOptions> _appSettings;
+    private readonly IDiagnosticContext _diagnosticContext;
 
     public WeatherForecastController(ILogger<WeatherForecastController> logger,
         ILoggerFactory loggerFactory,
         IConfiguration configuration,
-        IOptionsSnapshot<AppSettingsOptions> appSettings)
+        IOptionsSnapshot<AppSettingsOptions> appSettings,
+        IDiagnosticContext diagnosticContext)
     {
         _logger = logger;
         _loggerFactory = loggerFactory;
         _config = configuration;
         _appSettings = appSettings;
+        _diagnosticContext = diagnosticContext;
     }
 
     [HttpGet(Name = "GetWeatherForecast")]
@@ -37,6 +40,8 @@ public class WeatherForecastController : ControllerBase
         var random = new Random();
         int eventIdValue = random.Next(1, int.MaxValue);
         var eventId = new EventId(eventIdValue, CategoryName);
+
+        // _diagnosticContext.Set("UserId", "123456");
 
         logger.LogTrace(eventId, "Trace log");
         logger.LogDebug(eventId, "Debug log");
