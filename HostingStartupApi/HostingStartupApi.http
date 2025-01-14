@@ -1,0 +1,9 @@
+@HostingStartupApi_HostAddress = http://localhost:5136
+
+GET {{HostingStartupApi_HostAddress}}/config
+Accept: application/json
+
+###
+
+GET {{HostingStartupApi_HostAddress}}/service
+Accept: application/json

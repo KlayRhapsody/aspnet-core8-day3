@@ -1,7 +1,6 @@
 
 
 
-using Serilog.Extensions.Hosting;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
