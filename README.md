@@ -557,3 +557,130 @@ app.UseSerilogRequestLogging(options =>
 * `ASPNETCORE_WEBROOT`
 * `ASPNETCORE_TEMP`
 * `ASPNETCORE_FORWARDEDHEADERS_ENABLED`
+
+
+### **`dotnet publish -p` 與 `dotnet run /p` 的差異**
+
+在 `.NET` CLI 中，`/p` 和 `-p` 的用法其實是等價的，兩者都用來設定**MSBuild屬性（MSBuild Properties）**，但它們的使用差異主要來自歷史背景與平台習慣：
+1. **`/p`**：傳統上來自於 **Windows** 平台上的命令列工具（如 MSBuild），比較符合 Windows CLI 的參數風格。  
+2. **`-p`**：是較新的 **.NET Core/5/6/7** 跨平台工具的慣用寫法，更符合 Linux/macOS 的 CLI 風格。
+
+
+### **透過指令方式調整 `web.conf` 設定**
+
+```bash
+# 不關閉 web.config 轉換，true 則不產生 web.config
+# 指定環境變數為 Production
+dotnet publish -c Release -p:IsTransformWebConfigDisabled=false -p:EnvironmentName=Production
+```
+
+`web.config` 轉換後的結果
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <location path="." inheritInChildApplications="false">
+    <system.webServer>
+      <handlers>
+        <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
+      </handlers>
+      <aspNetCore processPath="dotnet" arguments=".\Api8.dll" stdoutLogEnabled="false" stdoutLogFile=".\logs\stdout" hostingModel="inprocess">
+        <environmentVariables>
+          <environmentVariable name="ASPNETCORE_ENVIRONMENT" value="Production" />
+        </environmentVariables>
+      </aspNetCore>
+    </system.webServer>
+  </location>
+</configuration>
+```
+
+
+### **使用 IIS 啟動網頁步驟**
+
+* 新增站台 (website)
+* 指定應用程式池 (application pool)
+  * 每個站台使用獨立的應用程式池 (應用程式集區)
+* 實體目錄 (physical path) 選擇發行的資料夾
+* 設定連接埠 (port)，預設為 80 可自行設定
+
+<br>
+優化設定
+
+調整應用程式集區的設定，使用 .NET 時， .NET CLR 版本選擇 No Managed Code (不需依賴 .NET Framework)
+
+<br>
+更新網站設定
+
+* 不要直接 Stop Manage Website
+* 應用程式池下 Stop 網站
+
+
+### **不同站台綁定相同的 Port**
+
+* IIS 提供虛擬目錄 (Virtual Directory) 的功能，可以將不同的站台綁定到同一個 Port 上，但是 URL 不同，可以透過使用 `xxxx.localhost` 來區分本地網域名稱
+
+
+### **`xxxxx.localhost`**
+
+`.localhost` 是一個由瀏覽器（如 Chrome）和作業系統預設保留的頂級域名（TLD），會自動解析到本機的 IP 位址 127.0.0.1（IPv6 則是 ::1）。這是專門為了讓開發者在本機測試時，方便模擬自訂網域名稱。
+
+`.localhost` 的特性
+* 自動解析至 127.0.0.1：不需要修改 hosts 檔案，像是 xxxx.localhost、test.localhost 都會自動指向本機。
+* 跨平台支援：這項功能在各大瀏覽器（如 Chrome、Firefox、Edge）和作業系統上都是內建的。
+* 安全：.localhost 不會被註冊或用於網際網路，避免名稱衝突。
+
+<br>
+
+雖然 `.localhost` 會自動指向本機，但瀏覽器不會自動將網域映射到特定的埠號（如 5200）。這意味著：輸入 `xxxx.localhost` ➔ 預設走 80（HTTP）或 443（HTTPS）你的應用程式運行在 5200 埠 ➔ 需要指定埠號才能連線
+
+```json
+{
+  "applicationUrl": "http://localhost:5200;http://hahaha.localhost:5200",
+}
+```
+
+
+### **發布 Docker Image 而不用透過撰寫 Dockerfile**
+
+.NET 8 開始，已內建 `Microsoft.NET.Build.Containers` 套件來發布 Docker Image
+
+```bash
+dotnet publish -t:PublishContainer
+```
+
+ASP.NET Core 應用程式預設在容器內使用 8080 端口
+
+```bash
+# -d：背景執行
+# -p：將容器的 8080 端口映射到主機的 8088 端口
+docker run -d -p 8088:8080 api8
+```
+
+
+### **透過 `docker-compose` 來管理多個容器**
+
+啟動 `mssqlserver`、`seq`、`api8`，yaml 檔案請參閱 `docker-compose.yml`
+
+```bash
+# 啟動容器
+docker compose up -d
+# 關閉容器
+docker compose down
+# 查看容器狀態
+docker compose ps
+```
+
+export SA_PASSWORD 環境變數或使用 .env 檔案
+
+```bash
+export SA_PASSWORD=Your_password123
+```
+
+
+### **刪除所有懸空的 Docker 映像檔**
+
+`-f "dangling=true"`：過濾條件，僅顯示懸空的映像檔
+
+```bash
+docker rmi $(docker images -f "dangling=true" -q)
+```
