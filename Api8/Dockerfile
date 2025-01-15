@@ -18,6 +18,8 @@ WORKDIR /app
 # 複製發佈檔案
 COPY --from=publish /app/publish .
 
+# 設定環境變數啟用完整全球化支援（確保 ICU 功能正常）
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 
 # 設定啟動命令
 ENTRYPOINT ["dotnet", "Api8.dll"]

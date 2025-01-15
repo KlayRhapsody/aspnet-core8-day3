@@ -657,6 +657,32 @@ docker run -d -p 8088:8080 api8
 ```
 
 
+### **透過 `.csproj` 來定義容器編譯選項**
+
+* `PublishProfile`: 指定發佈設定檔的名稱。在這裡，它被設為 `DefaultContainer`，表示使用預設的容器發佈設定檔。
+* `ContainerBaseImage`: 指定基礎映像檔。
+* `ContainerRepository`: 指定容器映像檔的儲存庫名稱。
+* `ContainerImageTags`: 指定容器映像檔的標籤。
+
+```xml
+<PropertyGroup>
+  <PublishProfile>DefaultContainer</PublishProfile>
+  <ContainerBaseImage>mcr.microsoft.com/dotnet/aspnet:8.0-jammy</ContainerBaseImage>
+  <ContainerRepository>api8</ContainerRepository>
+  <ContainerImageTags>latest</ContainerImageTags>
+</PropertyGroup>
+```
+
+
+### **使用 chiseled images 注意事項**
+
+chiseled images 是一種輕量級的 Docker 映像檔，通常只包含最小的執行時和應用程式，不包含任何開發工具或其他不必要的元件。這樣可以減少映像檔的大小，提高容器的啟動速度。
+
+若應用程式需使用到 SQL Server 驅動（Microsoft.Data.SqlClient）和 Serilog 的 MSSQL Sink，這兩者依賴全球化（Globalization）功能來正確運作。這與多語系無關，而是與底層的字串處理和數據格式化有關。使用 chiseled 作為 base image 時，因為缺少全球化功能，會導致應用程式無法正確啟動。
+
+解決方法：可以使用 `8.0-jammy-chiseled-extra` 映像檔，它包含了 ICU 和 tzdata 套件，這兩者是全球化功能的基礎。
+
+
 ### **透過 `docker-compose` 來管理多個容器**
 
 啟動 `mssqlserver`、`seq`、`api8`，yaml 檔案請參閱 `docker-compose.yml`
