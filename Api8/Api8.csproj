@@ -7,6 +7,13 @@
     <UserSecretsId>035b1e97-55eb-4ebb-9f59-15f613295ce6</UserSecretsId>
   </PropertyGroup>
 
+  <!-- <PropertyGroup> -->
+    <!-- <PublishProfile>DefaultContainer</PublishProfile> -->
+    <!-- <ContainerBaseImage>mcr.microsoft.com/dotnet/aspnet:8.0-jammy-chiseled</ContainerBaseImage> -->
+    <!-- <ContainerRepository>api8-chiseled</ContainerRepository> -->
+    <!-- <ContainerImageTags>latest</ContainerImageTags> -->
+  <!-- </PropertyGroup> -->
+
   <ItemGroup>
     <PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />
     <PackageReference Include="Serilog.Expressions" Version="5.0.0" />
